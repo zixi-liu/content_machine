@@ -45,8 +45,9 @@ async function resolveId(id, name) {
   if (!name) { console.error(`"${id}" looks like a red_id — pass your handle as the 2nd arg to resolve it.`); process.exit(1); }
   const r = await fetch(`${BASE}/api/v1/xiaohongshu/app_v2/search_users?keyword=${encodeURIComponent(name)}&page=1`, { headers: H });
   const j = await r.json();
-  // search_users nests inconsistently too: users at data.users or data.data.users
-  const users = j?.data?.users || j?.data?.data?.users || [];
+  // search_users nests inconsistently too: users at data.users and/or data.data.users
+  // (outer list can be present-but-empty, so combine both rather than ||-chaining)
+  const users = [...(j?.data?.users || []), ...(j?.data?.data?.users || [])];
   const hit = users.find(u => String(u.red_id) === String(id));
   if (!hit) { console.error(`No user with red_id ${id} found searching "${name}".`); process.exit(1); }
   console.log(`Resolved red_id ${id} → ${hit.id}`);
